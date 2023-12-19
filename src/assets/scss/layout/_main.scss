@@ -1,0 +1,42 @@
+* {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    font-size: $fontSize;
+}
+
+body {
+    font-family: $fontFamily;
+    font-size: $fontSize;
+    color: $textColor;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 0;
+    margin: 0;
+    min-height: 100%;
+    background-color: $bodyBgColor;
+
+    .ajax-loader {
+        font-size: 32px;
+    }
+
+    &.hidden-overflow{
+        overflow: hidden;
+    }
+}
+
+a {
+    text-decoration: none;
+    color: $textSecondaryColor;
+	color: var(--primary-color);
+}
+
+.layout-wrapper {
+    min-height: 100vh;
+    @include flex();
+    @include flex-direction-row();
+}

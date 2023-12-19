@@ -1,0 +1,18 @@
+<div *appSplashScreen>
+  <smsedu-splash-screen></smsedu-splash-screen>
+</div>
+<p-toast
+  [breakpoints]="{ '768px': { width: '100%', right: '0', left: '0' } }"
+  [showTransformOptions]="'translateY(100%)'"
+  [showTransitionOptions]="'300ms'"
+  [hideTransitionOptions]="'00ms'"
+  [showTransformOptions]="'translateX(100%)'"></p-toast>
+<p-confirmDialog
+  header="Xác nhận"
+  key="confirm1"
+  icon="pi pi-exclamation-triangle"
+  message="Bạn có chắc muốn tiếp tục?"
+  [style]="{ minWidth: '450px' }"
+  acceptButtonStyleClass="p-button-text"
+  rejectButtonStyleClass="p-button-text"></p-confirmDialog>
+<router-outlet></router-outlet>

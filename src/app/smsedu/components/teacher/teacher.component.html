@@ -1,0 +1,519 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<div class="assignment-body grid">
+  <div class="col-12">
+    <div class="card px-6 py-6 bg-">
+      <!-- Tooolbar -->
+      <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+          <div class="my-2">
+            <button
+              pButton
+              pRipple
+              label="Thêm"
+              icon="pi pi-plus"
+              class="p-button-success mr-2"
+              (click)="openNew()"></button>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-trash"
+              class="p-button-danger"
+              (click)="onConfirmSelectedDelete()"
+              [disabled]="
+                !selectedTeachers || !selectedTeachers.length
+              "></button>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="right">
+          <button pButton pRipple class="custom-btn-warning mr-2 inline-block">
+            <i class="pi pi-plus mr-1"></i> Import
+            <input
+              type="file"
+              (change)="onFileChange($event)"
+              multiple="false"
+              accept=".xlsx" />
+          </button>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-upload"
+            class="p-button-help"
+            (click)="onExportExcelTeachers()"></button>
+        </ng-template>
+      </p-toolbar>
+
+      <!-- Table data -->
+      <p-table
+        #dt
+        [value]="teachers"
+        [(selection)]="selectedTeachers"
+        [lazy]="true"
+        dataKey="id"
+        (onLazyLoad)="onLoadTeachers($event)"
+        styleClass="p-datatable-gridlines"
+        [tableStyle]="{ 'min-width': '50rem' }"
+        responsiveLayout="scroll"
+        [rowHover]="true"
+        [paginator]="true"
+        [rows]="10"
+        [totalRecords]="totalRecords"
+        [loading]="loading"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Hiển thị từ {first} đến {last} của mục {totalRecords}"
+        [rowsPerPageOptions]="[10, 20, 30]"
+        [resizableColumns]="true">
+        <ng-template pTemplate="caption">
+          <div class="flex">
+            <button
+              pButton
+              label="Clear"
+              class="p-button-outlined"
+              icon="pi pi-filter-slash"
+              (click)="clear()"></button>
+            <span class="p-input-icon-left ml-auto">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                type="text"
+                [value]="searchTeacher"
+                placeholder="Tìm kiếm..."
+                (keyup)="onSearch(getSearchValue($event))"
+                class="w-full sm:w-auto" />
+            </span>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+          <tr class="text-center">
+            <th style="width: 3rem" class="text-center">
+              <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+            </th>
+            <th pSortableColumn="name" class="text-center">
+              Họ và tên<p-sortIcon field="name"></p-sortIcon>
+            </th>
+            <th pSortableColumn="gender" class="text-center">
+              Giới tính<p-sortIcon field="gender"></p-sortIcon>
+            </th>
+            <th pSortableColumn="departmentNavigation" class="text-center">
+              Phòng ban<p-sortIcon field="departmentNavigation"></p-sortIcon>
+            </th>
+            <th pSortableColumn="dateOfBirth" class="text-center">
+              Ngày sinh<p-sortIcon field="dateOfBirth"></p-sortIcon>
+            </th>
+            <!-- <th pSortableColumn="status" class="text-center">
+              Trạng thái<p-sortIcon field="status"></p-sortIcon>
+            </th> -->
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-teacher>
+          <tr>
+            <td class="text-center">
+              <p-tableCheckbox [value]="teacher"></p-tableCheckbox>
+            </td>
+            <td style="min-width: 12rem">
+              <span class="p-column-title">Họ và tên</span>
+              {{ teacher.name }}
+            </td>
+            <td style="min-width: 10rem" class="text-center">
+              <span class="p-column-title">Giới tính</span>
+              {{ teacher.gender === 'M' ? 'Nam' : 'Nữ' }}
+            </td>
+            <td style="min-width: 12rem">
+              <span class="p-column-title">Phòng ban</span>
+              {{ teacher?.departmentNavigation?.name || 'Chưa xác định' }}
+            </td>
+            <td style="min-width: 12rem" class="text-center">
+              <span class="p-column-title">Ngày sinh</span>
+              {{
+                (!!teacher.dateOfBirth && teacher.dateOfBirth
+                  | date: 'dd/MM/yyyy') || 'Không xác định'
+              }}
+            </td>
+            <!-- <td style="min-width: 12rem" class="text-center">
+              <span class="p-column-title">Trạng thái</span>
+              <span
+                [class]="
+                  'assignment-badge status-' +
+                  (teacher.status ? teacher.status.toLowerCase() : 'inactivate')
+                "
+                >{{ teacher?.status || 'Không kích hoạt' }}</span
+              >
+            </td> -->
+            <td class="text-justify">
+              <div class="flex">
+                <button
+                  pButton
+                  pRipple
+                  icon="pi pi-eye"
+                  class="p-button-rounded p-button-help mr-2"
+                  (click)="openDetail(teacher.id)"></button>
+                <button
+                  pButton
+                  pRipple
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-success mr-2"
+                  (click)="openEdit(teacher.id)"></button>
+                <button
+                  pButton
+                  pRipple
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-warning"
+                  (click)="onConfirmDelete(teacher)"></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+
+      <!-- Teacher Dialog -->
+      <p-dialog
+        [(visible)]="teacherDialog"
+        header="HỒ SƠ GIÁO VIÊN"
+        [style]="{ width: '650px' }"
+        [modal]="true"
+        class="p-fluid">
+        <ng-template pTemplate="content">
+          <form [formGroup]="teacherForm" autocomplete="off">
+            <div class="grid formgrid">
+              <div class="field col-12 md:col-6">
+                <label for="name" class="font-bold block mb-2">Họ và tên</label>
+                <input
+                  type="text"
+                  pInputText
+                  id="name"
+                  formControlName="name"
+                  placeholder="..."
+                  class="w-full" />
+                <small
+                  *ngIf="
+                    teacherForm.controls['name'].invalid &&
+                    (teacherForm.controls['name'].dirty ||
+                      teacherForm.controls['name'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="teacherForm.controls['name'].errors?.['required']">
+                    Họ và tên là bắt buộc.
+                  </div>
+                  <div *ngIf="teacherForm.controls['name'].errors?.['pattern']">
+                    Họ và tên không hợp lệ.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="nickname" class="font-bold block mb-2"
+                  >Biệt danh</label
+                >
+                <input
+                  type="text"
+                  pInputText
+                  id="nickname"
+                  formControlName="nickname"
+                  placeholder="..."
+                  class="w-full" />
+                <small
+                  *ngIf="
+                    teacherForm.controls['nickname'].invalid &&
+                    (teacherForm.controls['nickname'].dirty ||
+                      teacherForm.controls['nickname'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="
+                      teacherForm.controls['nickname'].errors?.['required']
+                    ">
+                    Họ và tên là bắt buộc.
+                  </div>
+                  <div
+                    *ngIf="
+                      teacherForm.controls['nickname'].errors?.['pattern']
+                    ">
+                    Biệt danh không hợp lệ.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="mainSubject" class="font-bold block mb-2"
+                  >Môn giảng dạy</label
+                >
+                <p-autoComplete
+                  inputId="mainSubject"
+                  formControlName="mainSubject"
+                  [dropdown]="true"
+                  [suggestions]="filteredSubjects"
+                  (completeMethod)="onFilterSubject($event)"
+                  appendTo="body"
+                  field="name"></p-autoComplete>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="departmentNavigation" class="font-bold block mb-2"
+                  >Phòng ban</label
+                >
+                <p-autoComplete
+                  inputId="departmentNavigation"
+                  formControlName="departmentNavigation"
+                  [dropdown]="true"
+                  [suggestions]="filteredDepartments"
+                  (completeMethod)="onFilterDepartment($event)"
+                  appendTo="body"
+                  field="name"></p-autoComplete>
+              </div>
+
+              <div class="field col-4">
+                <div class="flex align-items-center gap-2">
+                  <label
+                    for="male"
+                    class="font-bold block flex align-items-center"
+                    >Giới tính</label
+                  >
+                  <div class="flex align-items-center">
+                    <p-radioButton
+                      name="gender"
+                      value="M"
+                      formControlName="gender"
+                      inputId="male"></p-radioButton>
+                    <label for="male" class="ml-2">Nam</label>
+                  </div>
+
+                  <div class="flex align-items-center">
+                    <p-radioButton
+                      name="gender"
+                      value="F"
+                      formControlName="gender"
+                      inputId="female"></p-radioButton>
+                    <label for="female" class="ml-2">Nữ</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field col-4">
+                <div class="flex align-items-center">
+                  <label for="isUnionMember" class="font-bold block mr-2"
+                    >Đoàn viên</label
+                  >
+                  <p-checkbox
+                    formControlName="isUnionMember"
+                    [binary]="true"
+                    inputId="isUnionMember"></p-checkbox>
+                </div>
+              </div>
+
+              <div class="field col-4">
+                <div class="flex align-items-center">
+                  <label for="isPartyMember" class="font-bold block mr-2"
+                    >Đảng viên</label
+                  >
+                  <p-checkbox
+                    formControlName="isPartyMember"
+                    [binary]="true"
+                    inputId="isPartyMember"></p-checkbox>
+                </div>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="phone" class="font-bold block mb-2"
+                  >Số điện thoại</label
+                >
+                <input
+                  type="text"
+                  pInputText
+                  id="phone"
+                  formControlName="phone"
+                  placeholder="01234567xx"
+                  class="w-full" />
+                <small
+                  *ngIf="
+                    teacherForm.controls['phone'].invalid &&
+                    (teacherForm.controls['phone'].dirty ||
+                      teacherForm.controls['phone'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="teacherForm.controls['phone'].errors?.['required']">
+                    Số điện thoại là bắt buộc.
+                  </div>
+                  <div
+                    *ngIf="teacherForm.controls['phone'].errors?.['pattern']">
+                    Số điện thoại không hợp lệ.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="email" class="font-bold block mb-2">Email</label>
+                <input
+                  type="text"
+                  pInputText
+                  id="email"
+                  formControlName="email"
+                  placeholder="..."
+                  class="w-full" />
+                <small
+                  *ngIf="
+                    teacherForm.controls['email'].invalid &&
+                    (teacherForm.controls['email'].dirty ||
+                      teacherForm.controls['email'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="teacherForm.controls['email'].errors?.['required']">
+                    Email là bắt buộc.
+                  </div>
+                  <div *ngIf="teacherForm.controls['email'].errors?.['email']">
+                    Email không hợp lệ.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="dateOfBirth" class="font-bold block mb-2"
+                  >Ngày sinh</label
+                >
+                <p-calendar
+                  id="name"
+                  dateFormat="dd/mm/yy"
+                  id="dateOfBirth"
+                  formControlName="dateOfBirth"
+                  [readonlyInput]="true"
+                  [showButtonBar]="true"
+                  appendTo="body"
+                  [showIcon]="true"
+                  [minDate]="minDate"
+                  [maxDate]="maxDate"
+                  placeholder="../../...." />
+
+                <small
+                  *ngIf="
+                    teacherForm.controls['dateOfBirth'].invalid &&
+                    (teacherForm.controls['dateOfBirth'].dirty ||
+                      teacherForm.controls['dateOfBirth'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="
+                      teacherForm.controls['dateOfBirth'].errors?.['required']
+                    ">
+                    Ngày sinh là bắt buộc.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="dateOfRecruitment" class="font-bold block mb-2"
+                  >Ngày tuyển dụng</label
+                >
+                <p-calendar
+                  id="name"
+                  dateFormat="dd/mm/yy"
+                  id="dateOfRecruitment"
+                  formControlName="dateOfRecruitment"
+                  [readonlyInput]="true"
+                  [showButtonBar]="true"
+                  appendTo="body"
+                  [showIcon]="true"
+                  [minDate]="minDate"
+                  [maxDate]="maxDate"
+                  placeholder="../../...." />
+
+                <small
+                  *ngIf="
+                    teacherForm.controls['dateOfRecruitment'].invalid &&
+                    (teacherForm.controls['dateOfRecruitment'].dirty ||
+                      teacherForm.controls['dateOfRecruitment'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="
+                      teacherForm.controls['dateOfRecruitment'].errors?.[
+                        'required'
+                      ]
+                    ">
+                    Ngày tuyển dụng là bắt buộc.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="address" class="font-bold block mb-2"
+                  >Địa chỉ</label
+                >
+                <input
+                  type="text"
+                  pInputText
+                  id="address"
+                  formControlName="address"
+                  placeholder="..." />
+                <small
+                  *ngIf="
+                    teacherForm.controls['address'].invalid &&
+                    (teacherForm.controls['address'].dirty ||
+                      teacherForm.controls['address'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="
+                      teacherForm.controls['address'].errors?.['required']
+                    ">
+                    Địa chỉ là bắt buộc.
+                  </div>
+                </small>
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label for="qualification" class="font-bold block mb-2"
+                  >Trình độ chuyên môn</label
+                >
+                <p-dropdown
+                  id="qualification"
+                  formControlName="qualification"
+                  [options]="qualifications"
+                  optionLabel="label"
+                  placeholder="Chọn trình độ chuyên môn"
+                  appendTo="body"
+                  class="w-full"></p-dropdown>
+                <small
+                  *ngIf="
+                    teacherForm.controls['qualification'].invalid &&
+                    (teacherForm.controls['qualification'].dirty ||
+                      teacherForm.controls['qualification'].touched)
+                  "
+                  class="block p-error mt-2">
+                  <div
+                    *ngIf="
+                      teacherForm.controls['qualification'].errors?.['required']
+                    ">
+                    Trình độ chuyên môn là bắt buộc.
+                  </div>
+                </small>
+              </div>
+            </div>
+          </form>
+        </ng-template>
+
+        <!-- Action -->
+        <ng-template pTemplate="footer">
+          <button
+            pButton
+            pRipple
+            label="Hủy"
+            icon="pi pi-times"
+            class="p-button-text"
+            (click)="onHideDialog()"></button>
+          <button
+            pButton
+            pRipple
+            label="Lưu"
+            icon="pi pi-check"
+            class="p-button-text"
+            [disabled]="teacherForm.invalid || isOpenView"
+            (click)="onSaveTeacher()"></button>
+        </ng-template>
+      </p-dialog>
+    </div>
+  </div>
+</div>
