@@ -23,7 +23,7 @@ export const largeToSmall = trigger('toggleCollapsed', [
   transition('large => small', animate('0.35s ease-out')),
 ]);
 
-// skks
+// skksslsllsslsl
 export const smallToLarge = trigger('toggleCollapsed', [
   state(
     'large',
