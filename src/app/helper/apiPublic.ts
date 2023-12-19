@@ -1,6 +1,8 @@
 import { environment } from 'src/environments/environment';
 
 const domain: string = environment.baseUrl;
+
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const endpoint: any = environment.endpoint;
 
